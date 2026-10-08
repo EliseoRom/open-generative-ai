@@ -39,11 +39,15 @@ export default function ApiKeyModal({ onSave, onClose, overlay = false, title, s
             </svg>
           </div>
           <h1 className="text-xl font-bold text-white tracking-tight mb-2">
-            {title || 'Open Generative AI'}
+            {title || 'EliseoRom / Open Generative AI'}
           </h1>
           <p className="text-white/40 text-[13px] leading-relaxed px-4">
             {subtitle || (
-              <>Enter your <a href="https://muapi.ai/access-keys" target="_blank" rel="noreferrer" className="text-[#22d3ee] hover:text-[#e5ff33] transition-colors">Muapi.ai</a> API key to start creating</>
+              <>
+                Bring your own MuAPI key (generation engine). / Usa tu propia clave MuAPI.
+                {' '}
+                <a href="https://muapi.ai/access-keys" target="_blank" rel="noreferrer" className="text-[#22d3ee] hover:text-[#e5ff33] transition-colors">muapi.ai/access-keys</a>
+              </>
             )}
           </p>
         </div>
@@ -73,9 +77,10 @@ export default function ApiKeyModal({ onSave, onClose, overlay = false, title, s
           </button>
 
           <p className="text-center text-[12px] text-white/20 pt-2">
-            Need a key?{' '}
+            The key stays in this tab (sessionStorage), not in cookies.{' '}
+            La clave queda en esta pestaña, no en cookies.{' '}
             <a href="https://muapi.ai/access-keys" target="_blank" rel="noreferrer" className="text-white/40 hover:text-[#22d3ee] transition-colors font-medium">
-              Get one free →
+              Get a key →
             </a>
           </p>
         </form>

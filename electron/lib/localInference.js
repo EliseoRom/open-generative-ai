@@ -2,11 +2,9 @@ const { ipcMain, app, BrowserWindow } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
-const http = require('http');
 const { spawn, execFile } = require('child_process');
 const {
     getBundledBinaryResourceDir,
-    pickBinaryAssetForPlatform,
 } = require('./localInferenceAssets');
 const {
     formatStartupProgressMessage,
@@ -18,6 +16,13 @@ const {
     LOCAL_AI_DIR_ENV,
     resolveLocalAiPaths,
 } = require('./localInferencePaths');
+const {
+    LOCAL_AI_SHA_ENV,
+    assertTrustedBinary,
+    downloadHttpsFile,
+    pinnedDownloadFor,
+    sha256File,
+} = require('./binaryIntegrity');
 
 // ─── Paths ────────────────────────────────────────────────────────────────────
 // Resolved lazily (from register(), after app.whenReady()) so a failure here
@@ -49,24 +54,6 @@ const activeDownloads = new Map(); // modelId → request object
 // Asset names look like: sd-master-44cca3d-bin-Darwin-macOS-15.7.4-arm64.zip
 // We pick the best match in priority order so a single release that only
 // ships e.g. avx512 still resolves cleanly.
-function fetchJson(url) {
-    return new Promise((resolve, reject) => {
-        https.get(url, { headers: { 'User-Agent': 'open-generative-ai' } }, (res) => {
-            if (res.statusCode !== 200) {
-                res.resume();
-                reject(new Error(`HTTP ${res.statusCode} from ${url}`));
-                return;
-            }
-            let body = '';
-            res.on('data', (d) => { body += d; });
-            res.on('end', () => {
-                try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
-            });
-            res.on('error', reject);
-        }).on('error', reject);
-    });
-}
-
 // ─── Robust HTTPS download with redirect-following, range-resume, and retry ───
 function downloadFile(url, destPath, onProgress) {
     const tmp = destPath + '.part';
@@ -79,7 +66,11 @@ function downloadFile(url, destPath, onProgress) {
         const alreadyDownloaded = fs.existsSync(tmp) ? fs.statSync(tmp).size : 0;
 
         const parsed = new URL(requestUrl);
-        const mod = parsed.protocol === 'https:' ? https : http;
+        if (parsed.protocol !== 'https:') {
+            reject(new Error(`Refusing non-HTTPS download: ${parsed.protocol}//${parsed.hostname}`));
+            return;
+        }
+        const mod = https;
 
         const reqHeaders = {
             'User-Agent': 'Mozilla/5.0 (compatible; open-generative-ai/1.0)',
@@ -224,12 +215,6 @@ async function getBinaryStatus() {
     };
 }
 
-// Metal-enabled binaries hosted on our own release (macOS arm64 only).
-// Other platforms fall back to the stock leejet release.
-const CUSTOM_BINARIES = {
-    'darwin-arm64': 'https://github.com/Anil-matcha/Open-Generative-AI/releases/download/v1.0.3-binaries/sd-cli-metal-macos-arm64.zip',
-};
-
 async function downloadBinary(mainWindow) {
     const send = (data) => mainWindow?.webContents.send('local-ai:download-progress', { id: '__binary__', ...data });
 
@@ -237,86 +222,54 @@ async function downloadBinary(mainWindow) {
         send({ phase: 'fetching-release', progress: 0 });
 
         if (ensureBundledBinaryInstalled()) {
+            assertTrustedBinary(BINARY_PATH);
             send({ phase: 'done', progress: 1 });
             return { ok: true, source: 'bundled' };
         }
 
-        const platformKey = `${process.platform}-${process.arch}`;
-        const customUrl = CUSTOM_BINARIES[platformKey];
+        if (fs.existsSync(BINARY_PATH)) {
+            assertTrustedBinary(BINARY_PATH);
+            send({ phase: 'done', progress: 1 });
+            return { ok: true, source: 'local' };
+        }
 
-        let downloadUrl, zipName;
-
-        if (customUrl) {
-            downloadUrl = customUrl;
-            zipName = path.basename(customUrl);
-        } else {
-            // Walk recent releases until we find one that actually ships a
-            // build for this platform. leejet sometimes publishes a partial
-            // release (e.g. master-587 ships only Mac arm64 + Linux ROCm),
-            // so the very latest tag isn't always usable.
-            const releases = await fetchJson(
-                'https://api.github.com/repos/leejet/stable-diffusion.cpp/releases?per_page=15'
+        const pin = pinnedDownloadFor(process.platform, process.arch);
+        if (!pin?.url || !pin?.sha256) {
+            throw new Error(
+                `Auto-download of sd-cli is disabled (no pinned URL + SHA-256 for ${process.platform}-${process.arch}). ` +
+                `Copy a known-good ${BINARY_NAME} into ${BIN_DIR} and set ${LOCAL_AI_SHA_ENV} to its SHA-256.`
             );
-
-            let chosen = null;
-            let lastSeen = [];
-            for (const release of releases) {
-                const zips = (release.assets || [])
-                    .filter(a => a.name.endsWith('.zip'));
-                lastSeen = zips.map(a => a.name);
-                const pickedName = pickBinaryAssetForPlatform({
-                    platform: process.platform,
-                    arch: process.arch,
-                    zipNames: lastSeen,
-                });
-                if (pickedName) {
-                    chosen = zips.find(a => a.name === pickedName);
-                    break;
-                }
-            }
-
-            if (!chosen) {
-                if (process.platform === 'darwin' && process.arch !== 'arm64') {
-                    throw new Error('Local inference on macOS only supports Apple Silicon (M1/M2/M3/M4). Mac Intel is not supported by stable-diffusion.cpp upstream.');
-                }
-                if (process.platform === 'linux' && process.arch === 'arm64') {
-                    throw new Error('No upstream stable-diffusion.cpp binary found for linux-arm64. Install a build that bundles local-ai/linux-arm64/bin or provide the binary manually.');
-                }
-                const available = lastSeen.join(', ') || '(none)';
-                throw new Error(`No binary found for ${process.platform}-${process.arch} in the last 15 releases. Latest release assets: ${available}`);
-            }
-            downloadUrl = chosen.browser_download_url;
-            zipName = chosen.name;
         }
 
         send({ phase: 'downloading', progress: 0 });
+        const zipName = path.basename(new URL(pin.url).pathname) || 'sd-cli.zip';
         const zipPath = path.join(BIN_DIR, zipName);
-        await downloadFile(downloadUrl, zipPath, (p) => {
+        await downloadHttpsFile(pin.url, zipPath, (p) => {
             send({ phase: 'downloading', progress: p });
         });
+
+        const zipHash = sha256File(zipPath);
+        if (zipHash.toLowerCase() !== String(pin.sha256).toLowerCase()) {
+            fs.unlinkSync(zipPath);
+            throw new Error(`sd-cli archive integrity check failed (expected ${pin.sha256}, got ${zipHash})`);
+        }
 
         send({ phase: 'extracting', progress: 0.95 });
         await extractZip(zipPath, BIN_DIR);
         fs.unlinkSync(zipPath);
 
-        // The zip may extract into a subdirectory — find the binary wherever it landed
         const foundBinary = findFile(BIN_DIR, BINARY_NAME);
         if (!foundBinary) throw new Error(`Extracted archive but could not find "${BINARY_NAME}" inside ${BIN_DIR}`);
 
-        // Move it to the expected root location if it's nested
         if (foundBinary !== BINARY_PATH) {
             fs.renameSync(foundBinary, BINARY_PATH);
         }
 
         ensureBinaryPermissions();
-
-        // macOS: strip Gatekeeper quarantine so the downloaded binary can run
-        if (process.platform === 'darwin') {
-            await new Promise((res) => execFile('xattr', ['-cr', BIN_DIR], () => res()));
-        }
+        assertTrustedBinary(BINARY_PATH);
 
         send({ phase: 'done', progress: 1 });
-        return { ok: true };
+        return { ok: true, source: 'pinned' };
     } catch (err) {
         send({ phase: 'error', error: err.message });
         throw err;
@@ -428,7 +381,13 @@ async function generate(params, mainWindow) {
     const send = (data) => mainWindow?.webContents.send('local-ai:progress', data);
 
     ensureBundledBinaryInstalled();
-    if (!fs.existsSync(BINARY_PATH)) throw new Error('sd.cpp binary not installed. Download it in Settings > Local Models.');
+    if (!fs.existsSync(BINARY_PATH)) {
+        throw new Error(
+            `sd.cpp binary not installed. Auto-download is disabled without a pinned SHA-256. ` +
+            `Place ${BINARY_NAME} in ${BIN_DIR} and set ${LOCAL_AI_SHA_ENV}.`
+        );
+    }
+    assertTrustedBinary(BINARY_PATH);
 
     const model = LOCAL_MODEL_CATALOG.find(m => m.id === params.model);
     if (!model) throw new Error(`Unknown local model: ${params.model}`);

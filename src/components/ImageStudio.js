@@ -9,6 +9,7 @@ import { LOCAL_MODEL_CATALOG, getLocalModelById } from '../lib/localModels.js';
 import { ENHANCE_TAGS, QUICK_PROMPTS } from '../lib/promptUtils.js';
 import { AuthModal } from './AuthModal.js';
 import { t } from '../lib/i18n.js';
+import { getApiKey } from '../lib/apiKeyStore.js';
 import { createUploadPicker } from './UploadPicker.js';
 import { savePendingJob, removePendingJob, getPendingJobs } from '../lib/pendingJobs.js';
 
@@ -1082,7 +1083,7 @@ export function ImageStudio() {
         const pending = getPendingJobs('image');
         if (!pending.length) return;
 
-        const apiKey = localStorage.getItem('muapi_key');
+        const apiKey = getApiKey();
         if (!apiKey) return; // can't poll without key; jobs remain for next time
 
         const banner = document.createElement('div');
@@ -1237,7 +1238,7 @@ export function ImageStudio() {
         }
 
         // ── Remote API path ───────────────────────────────────────────────────
-        const apiKey = localStorage.getItem('muapi_key');
+        const apiKey = getApiKey();
         if (!apiKey) {
             AuthModal(() => generateBtn.click());
             return;

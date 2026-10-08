@@ -1,10 +1,9 @@
 /**
  * Layout for /agents/* pages.
- * These pages host the AiAgent component full-screen — no studio chrome needed.
- * The api key is available via the muapi_key cookie which StandaloneShell sets.
+ * The MuAPI key lives in sessionStorage / memory (never a JS cookie).
  */
 export const metadata = {
-  title: "Agent Chat — Open Generative AI",
+  title: "Agent Chat — EliseoRom / Open Generative AI",
 };
 
 export default function AgentsLayout({ children }) {

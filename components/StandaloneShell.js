@@ -11,6 +11,7 @@ const DesignAgentStudio = dynamic(() => import('studio').then(mod => mod.DesignA
 });
 import axios from 'axios';
 import ApiKeyModal from './ApiKeyModal';
+import { getApiKey, setApiKey, clearApiKey } from '../src/lib/apiKeyStore';
 
 const TABS = [
   {
@@ -178,8 +179,6 @@ const TABS = [
   }
 ];
 
-const STORAGE_KEY = 'muapi_key';
-
 export default function StandaloneShell() {
   const params = useParams();
   const router = useRouter();
@@ -213,18 +212,13 @@ export default function StandaloneShell() {
     return 'image';
   };
   
-  const [apiKey, setApiKey] = useState(null);
+  const [apiKey, setApiKeyState] = useState(null);
   const [activeTab, setActiveTab] = useState(getInitialTab());
 
   const [balance, setBalance] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [hasMounted, setHasMounted] = useState(false);
-  const [showVadooBanner, setShowVadooBanner] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('vadoo_banner_dismissed') !== '1';
-    return true;
-  });
-
   // Sidebar Collapsed & Mobile Drawer State
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') return localStorage.getItem('sidebar_collapsed') === 'true';
@@ -332,27 +326,23 @@ export default function StandaloneShell() {
 
   useEffect(() => {
     setHasMounted(true);
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = getApiKey();
     if (stored) {
-      setApiKey(stored);
+      setApiKeyState(stored);
       fetchBalance(stored);
-      // Sync cookie immediately on mount to establish identity for background requests
-      document.cookie = `muapi_key=${stored}; path=/; max-age=31536000; SameSite=Lax`;
     }
   }, [fetchBalance]);
 
   const handleKeySave = useCallback((key) => {
-    localStorage.setItem(STORAGE_KEY, key);
     setApiKey(key);
+    setApiKeyState(key);
     fetchBalance(key);
-    document.cookie = `muapi_key=${key}; path=/; max-age=31536000; SameSite=Lax`;
   }, [fetchBalance]);
 
   const handleKeyChange = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setApiKey(null);
+    clearApiKey();
+    setApiKeyState(null);
     setBalance(null);
-    document.cookie = "muapi_key=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   }, []);
 
   // Inject API key into all outgoing Axios requests (prop-based approach)
@@ -459,30 +449,6 @@ export default function StandaloneShell() {
         </div>
       )}
 
-      {/* Vadoo promo banner */}
-      {showVadooBanner && (
-        <div className="flex-shrink-0 w-full bg-indigo-600 flex items-center justify-center px-4 py-2 gap-3 relative z-50">
-          <a
-            href="https://vadoo.tv"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[13px] font-bold text-white hover:opacity-80 transition-opacity text-center"
-          >
-            Unrestricted AI Images &amp; Videos → Auto-Publish as YouTube Shorts &amp; TikToks, Earn ↗
-          </a>
-          <button
-            onClick={() => {
-              setShowVadooBanner(false);
-              localStorage.setItem('vadoo_banner_dismissed', '1');
-            }}
-            className="absolute right-3 text-white/60 hover:text-white transition-colors text-lg leading-none"
-            aria-label="Dismiss"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
       {/* Header */}
       {isHeaderVisible && (
         <header className="flex-shrink-0 h-14 border-b border-white/[0.05] flex items-center justify-between px-4 bg-[#0a0a0b]/80 backdrop-blur-md z-50 gap-4">
@@ -536,7 +502,7 @@ export default function StandaloneShell() {
                 </svg>
               </div>
               <span className="text-sm font-bold tracking-tight hidden sm:block text-white">
-                OpenGenerativeAI
+                EliseoRom Studio
               </span>
             </div>
           </div>

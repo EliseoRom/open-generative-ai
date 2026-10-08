@@ -1,11 +1,10 @@
-# Open Generative AI — Unrestricted Open-Source Alternative to AI Video Platforms
+# EliseoRom / Open Generative AI
 
-[![Powered by MuAPI](https://img.shields.io/badge/Powered%20by-MuAPI-6366f1?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMSAxNHYtNGgtMnYtMmg0djZoLTJ6bTAtOFY2aDJ2MmgtMnoiLz48L3N2Zz4=)](https://muapi.ai?utm_source=github&utm_medium=badge&utm_campaign=open-generative-ai)
+Fork of Open Generative AI maintained at [github.com/EliseoRom/open-generative-ai](https://github.com/EliseoRom/open-generative-ai).
 
+> Image, video, cinema, audio, and lip-sync studios. Cloud generation still uses the **MuAPI** API — **bring your own key** (`Trae tu propia clave`). The key is kept in this browser tab (memory + sessionStorage), not in a cookie.
 
-> **The free, open-source alternative to AI Video Platforms.** Generate AI images and videos using 400+ state-of-the-art models across 14 studios — no content filters, no closed ecosystem, no subscription fees.
-
-**Community:** Join [Discord](https://discord.gg/tANKJkHck) for discussions and support
+This fork disables unsigned `sd-cli` auto-download in Electron (pin a SHA-256 or supply a local binary).
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=YhHHut-pDOY">
@@ -41,7 +40,6 @@
 
 > 🍌 **Claude Fable 5 use cases + 20% off on MuAPI:** [awesome-claude-fable-5](https://github.com/Anil-matcha/awesome-claude-fable-5) — 60 curated real-world use cases, prompts, and benchmarks for Claude Fable 5, with **20% off Fable 5 access** via [MuAPI](https://muapi.ai/pricing?utm_source=github&utm_medium=readme&utm_campaign=open-generative-ai).
 
-- [Vadoo](https://vadoo.tv) — Unrestricted AI image & video generation → auto-publish as YouTube Shorts and TikToks & earn
 - [AI-Youtube-Shorts-Generator](https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator) — Auto-generate viral YouTube Shorts from long-form videos using AI
 - [muapi-cli](https://github.com/SamurAIGPT/muapi-cli) — Official CLI for MuAPI — run these models from your terminal
 - [Vibe-Workflow](https://github.com/SamurAIGPT/Vibe-Workflow) — Node-based AI workflow builder for generative image & video pipelines
@@ -62,7 +60,7 @@
 
 Use all studios (Image, Video, Audio, AI Clipping, Vibe Motion, Lip Sync, Cinema, Marketing, Workflows, Agents, Design Agent, Apps, MCP & CLI) directly in your browser — no Node.js, no setup. Sign up for a free account to start generating. The hosted version is always up to date with the latest models.
 
-**Follow** the [creator](https://x.com/matchaman11) for updates
+This is Eliseo Romero’s fork. Upstream hosted demos and marketing banners are not part of this UI.
 
 ---
 
@@ -457,8 +455,8 @@ Pick the entry point that matches your goal:
 
 ```bash
 # Clone the repository (with submodules — required for the workflow + agent packages)
-git clone --recurse-submodules https://github.com/Anil-matcha/Open-Generative-AI.git
-cd Open-Generative-AI
+git clone --recurse-submodules https://github.com/EliseoRom/open-generative-ai.git
+cd open-generative-ai
 
 # If you already cloned without --recurse-submodules, run this once:
 # git submodule update --init --recursive
@@ -473,7 +471,7 @@ npm run electron:dev   # Desktop app (Electron + Vite) — recommended
 npm run dev            # Hosted web version (Next.js) → http://localhost:3000
 ```
 
-You'll be prompted to enter your Muapi API key on first use (skip the key if you only plan to use local models).
+You'll be prompted to enter your **own MuAPI API key** on first use (English / Español copy in Settings). Skip the key if you only plan to use local models with a hashed `sd-cli` binary (`LOCAL_AI_BINARY_SHA256`).
 
 > **Troubleshooting — `Couldn't find a 'pages' directory`**: this means Next.js can't see the `app/` folder. Confirm you're running `npm run dev` from the repo root (the directory that contains `app/`, `package.json`, and `next.config.mjs`), and that you cloned with submodules. Re-run `npm run setup` if `packages/Vibe-Workflow` or `packages/agents` are empty.
 

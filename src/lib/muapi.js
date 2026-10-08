@@ -1,4 +1,5 @@
 import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getLipSyncModelById } from './models.js';
+import { getApiKey } from './apiKeyStore.js';
 
 export class MuapiClient {
     constructor() {
@@ -7,7 +8,7 @@ export class MuapiClient {
     }
 
     getKey() {
-        const key = window.__MUAPI_KEY__ || localStorage.getItem('muapi_key');
+        const key = getApiKey();
         if (!key) throw new Error('API Key missing. Please set it in Settings.');
         return key;
     }
