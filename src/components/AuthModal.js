@@ -1,4 +1,5 @@
 import { t } from '../lib/i18n.js';
+import { setApiKey } from '../lib/apiKeyStore.js';
 
 export function AuthModal(onSuccess) {
     const overlay = document.createElement('div');
@@ -71,7 +72,7 @@ export function AuthModal(onSuccess) {
     btn.onclick = () => {
         const key = input.value.trim();
         if (key) {
-            localStorage.setItem('muapi_key', key);
+            setApiKey(key);
             close();
             if (onSuccess) onSuccess();
         } else {

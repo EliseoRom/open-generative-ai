@@ -93,17 +93,17 @@ const translations = {
         'settings.localModels': 'Local Models',
         'settings.muapiKeyLabel': 'Muapi API Key',
         'settings.keyPlaceholder': 'Enter your Muapi API key...',
-        'settings.keyNote': 'Your API key is stored locally and never sent anywhere except api.muapi.ai.',
+        'settings.keyNote': 'Bring your own MuAPI key. It is kept in memory + sessionStorage for this tab only (never a cookie). / Trae tu propia clave MuAPI. Se guarda en memoria y sessionStorage de esta pestaña, nunca en una cookie. Requests go only to api.muapi.ai.',
         'settings.invalidKey': 'Please enter a valid API key.',
 
         // Auth Modal
         'auth.title': 'Muapi API Key Required',
-        'auth.subtitle': 'Create a Muapi access key, then paste the key value here to start creating high-aesthetic images.',
+        'auth.subtitle': 'Bring your own MuAPI key (generation engine). / Usa tu propia clave MuAPI. Paste the key value here.',
         'auth.keyLabel': 'Muapi Access Key',
         'auth.keyPlaceholder': 'Paste your access key value...',
         'auth.keyNote': 'Do not enter the key name or label; paste the generated key value from Muapi.',
         'auth.initBtn': 'Initialize Studio',
-        'auth.createKey': 'Create or copy a Muapi access key →',
+        'auth.createKey': 'Need a key? Open muapi.ai/access-keys (bring your own).',
 
         // Image Studio
         'image.title': 'Image Studio',
@@ -294,7 +294,7 @@ const translations = {
         'settings.localModels': '本地模型',
         'settings.muapiKeyLabel': 'Muapi API 密钥',
         'settings.keyPlaceholder': '输入您的 Muapi API 密钥...',
-        'settings.keyNote': '您的 API 密钥仅存储在本地，除 api.muapi.ai 外不会发送到任何地方。',
+        'settings.keyNote': '自备 MuAPI 密钥。仅保存在本标签页的内存和 sessionStorage，不会写入 cookie。请求只发往 api.muapi.ai。',
         'settings.invalidKey': '请输入有效的 API 密钥。',
 
         // Auth Modal

@@ -1,6 +1,7 @@
 import { LocalModelManager } from './LocalModelManager.js';
 import { isLocalAIAvailable } from '../lib/localInferenceClient.js';
 import { t } from '../lib/i18n.js';
+import { getApiKey, setApiKey } from '../lib/apiKeyStore.js';
 
 export function SettingsModal(onClose) {
     const overlay = document.createElement('div');
@@ -49,24 +50,43 @@ export function SettingsModal(onClose) {
 
     // ── Tab: API Key ──────────────────────────────────────────────────────────
     const apiPanel = document.createElement('div');
-    apiPanel.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:0.75rem;">
-            <div>
-                <label style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.5);margin-bottom:0.4rem;font-weight:600;">${t('settings.muapiKeyLabel')}</label>
-                <input id="settings-api-key" type="password"
-                    style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:0.75rem;padding:0.6rem 0.9rem;color:#fff;font-size:0.875rem;outline:none;"
-                    placeholder="${t('settings.keyPlaceholder')}"
-                    value="${localStorage.getItem('muapi_key') || ''}">
-            </div>
-            <p style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin:0;">
-                ${t('settings.keyNote')}
-            </p>
-            <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem;">
-                <button id="settings-cancel-btn" style="padding:0.5rem 1rem;border-radius:0.5rem;background:none;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);font-size:0.75rem;font-weight:700;cursor:pointer;">${t('common.cancel')}</button>
-                <button id="settings-save-btn" style="padding:0.5rem 1rem;border-radius:0.5rem;background:var(--color-primary,#22d3ee);color:#000;font-size:0.75rem;font-weight:700;cursor:pointer;border:none;">${t('common.save')}</button>
-            </div>
-        </div>
-    `;
+    const apiWrap = document.createElement('div');
+    apiWrap.style.cssText = 'display:flex;flex-direction:column;gap:0.75rem;';
+
+    const field = document.createElement('div');
+    const label = document.createElement('label');
+    label.style.cssText = 'display:block;font-size:0.75rem;color:rgba(255,255,255,0.5);margin-bottom:0.4rem;font-weight:600;';
+    label.textContent = t('settings.muapiKeyLabel');
+    const keyInput = document.createElement('input');
+    keyInput.id = 'settings-api-key';
+    keyInput.type = 'password';
+    keyInput.style.cssText = 'width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:0.75rem;padding:0.6rem 0.9rem;color:#fff;font-size:0.875rem;outline:none;';
+    keyInput.placeholder = t('settings.keyPlaceholder');
+    keyInput.value = getApiKey() || '';
+    field.appendChild(label);
+    field.appendChild(keyInput);
+
+    const note = document.createElement('p');
+    note.style.cssText = 'font-size:0.7rem;color:rgba(255,255,255,0.3);margin:0;white-space:pre-line;';
+    note.textContent = t('settings.keyNote');
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem;';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.id = 'settings-cancel-btn';
+    cancelBtn.style.cssText = 'padding:0.5rem 1rem;border-radius:0.5rem;background:none;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);font-size:0.75rem;font-weight:700;cursor:pointer;';
+    cancelBtn.textContent = t('common.cancel');
+    const saveBtn = document.createElement('button');
+    saveBtn.id = 'settings-save-btn';
+    saveBtn.style.cssText = 'padding:0.5rem 1rem;border-radius:0.5rem;background:var(--color-primary,#22d3ee);color:#000;font-size:0.75rem;font-weight:700;cursor:pointer;border:none;';
+    saveBtn.textContent = t('common.save');
+    actions.appendChild(cancelBtn);
+    actions.appendChild(saveBtn);
+
+    apiWrap.appendChild(field);
+    apiWrap.appendChild(note);
+    apiWrap.appendChild(actions);
+    apiPanel.appendChild(apiWrap);
 
     // ── Tab: Local Models ─────────────────────────────────────────────────────
     const localPanel = LocalModelManager();
@@ -99,11 +119,11 @@ export function SettingsModal(onClose) {
         if (onClose) onClose();
     };
 
-    apiPanel.querySelector('#settings-cancel-btn').onclick = close;
-    apiPanel.querySelector('#settings-save-btn').onclick = () => {
-        const key = apiPanel.querySelector('#settings-api-key').value.trim();
+    cancelBtn.onclick = close;
+    saveBtn.onclick = () => {
+        const key = keyInput.value.trim();
         if (key) {
-            localStorage.setItem('muapi_key', key);
+            setApiKey(key);
             close();
         } else {
             alert(t('settings.invalidKey'));

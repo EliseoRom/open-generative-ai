@@ -1,7 +1,7 @@
 {
   "name": "open-generative-ai",
-  "description": "Open-source alternative to HF AI — AI image, video, cinema and lip sync studio",
-  "homepage": "https://github.com/Anil-matcha/Open-Generative-AI",
+  "description": "EliseoRom fork of Open Generative AI — image, video, cinema and lip-sync studio (MuAPI engine, bring your own key)",
+  "homepage": "https://github.com/EliseoRom/open-generative-ai",
   "private": true,
   "version": "2.0.0",
   "license": "MIT",
@@ -16,6 +16,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "node --test tests/*.test.js",
     "build:studio": "npm run build -w studio",
     "build:workflow": "npm run build -w workflow-builder",
     "build:agent": "npm run build -w ai-agent",
@@ -91,7 +92,7 @@
     "linux": {
       "icon": "public/banner.png",
       "category": "Utility",
-      "maintainer": "Open Generative AI Team",
+      "maintainer": "Eliseo Romero <https://github.com/EliseoRom>",
       "extraFiles": [
         {
           "from": "build/linux/apparmor.profile",
